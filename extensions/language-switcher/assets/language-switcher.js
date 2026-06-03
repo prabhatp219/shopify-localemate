@@ -258,11 +258,10 @@
       let node;
       while (node = walker.nextNode()) {
         const textVal = node.nodeValue.trim();
-        // Check if node text matches the current headline
-        if (textVal === s.currentHeadline) {
+        if (s.currentHeadline && textVal.toLowerCase() === s.currentHeadline.toLowerCase()) {
           const parent = node.parentElement;
           if (parent && !parent.hasAttribute('data-lm-original')) {
-            parent.setAttribute('data-lm-original', s.currentHeadline);
+            parent.setAttribute('data-lm-original', textVal);
             // Store AI translation for the market key
             const marketKey = s.market.toLowerCase();
             parent.setAttribute(`data-lm-trans-${marketKey}`, s.suggestedHeadline);
@@ -278,21 +277,47 @@
     });
   }
 
+  const countryToMarket = {
+    'US': 'usa',
+    'IN': 'india',
+    'DE': 'germany',
+    'JP': 'japan',
+    'GB': 'uk',
+    'FR': 'france',
+    'BR': 'brazil',
+    'SA': 'saudi arabia',
+    'KR': 'south korea',
+    'AU': 'australia',
+    'CA': 'canada',
+    'MX': 'mexico',
+    'IT': 'italy',
+    'ES': 'spain',
+    'AE': 'uae'
+  };
+
   function applyReplacement(el, locale) {
-    const marketKey = langToMarket[locale];
+    let marketKey = langToMarket[locale];
+
+    // If English is selected, check if there is an applied suggestion for the active storefront country
+    const currentCountryCode = (widget.dataset.currentCountry || 'US').toUpperCase();
+    const countryMarketKey = countryToMarket[currentCountryCode];
+    if (locale === 'en' && countryMarketKey) {
+      marketKey = countryMarketKey;
+    }
+
     const transAttr = `data-lm-trans-${marketKey}`;
     const original = el.getAttribute('data-lm-original');
 
-    if (locale === 'en') {
-      el.classList.remove('notranslate');
-      if (el.textContent !== original) {
-        el.textContent = original;
-      }
-    } else if (marketKey && el.hasAttribute(transAttr)) {
+    if (marketKey && el.hasAttribute(transAttr)) {
       const translation = el.getAttribute(transAttr);
       el.classList.add('notranslate');
       if (el.textContent !== translation) {
         el.textContent = translation;
+      }
+    } else {
+      el.classList.remove('notranslate');
+      if (el.textContent !== original) {
+        el.textContent = original;
       }
     }
   }

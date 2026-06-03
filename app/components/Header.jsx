@@ -73,7 +73,7 @@ export default function Header({
         {/* ADD MARKET BUTTON */}
         <button
           onClick={onAddMarket}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-teal-700"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-900 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-black"
         >
           <Plus size={18} />
           Add market

@@ -75,7 +75,7 @@ export default function CampaignGenerator() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mt-6 p-6">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
 
       {/* TOAST */}
       {toast.show && (
@@ -93,9 +93,6 @@ export default function CampaignGenerator() {
       <div className="flex items-start justify-between border-b border-gray-200 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center text-white text-lg">
-              ✈
-            </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Regional Campaign Generator
@@ -106,7 +103,7 @@ export default function CampaignGenerator() {
             </div>
           </div>
         </div>
-        <div className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+        <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
           ⚡ AI-Powered
         </div>
       </div>

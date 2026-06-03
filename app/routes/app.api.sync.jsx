@@ -77,255 +77,129 @@ export async function action({ request }) {
 
   try {
     const formData = await request.formData();
-
     const days = Number(formData.get("days")) || 30;
 
     console.log("Syncing analytics for:", days, "days");
 
-    const { admin, session } =
-      await authenticate.admin(request);
-
+    const { admin, session } = await authenticate.admin(request);
     const shop = session.shop;
 
-    /**
-     * Fetch Shopify data
-     */
+    // 1. Fetch Shopify data
     const [
       orders,
       shopifyMarkets,
       translatableProducts,
     ] = await Promise.all([
-      fetchRecentOrders(admin, days),
-
+      fetchRecentOrders(admin, 250), // Fetch up to 250 recent orders
       fetchShopifyMarkets(admin),
-
       fetchTranslatableProducts(admin, 100),
     ]);
 
-    const totalProducts =
-      translatableProducts.length || 1;
+    const totalProducts = translatableProducts.length || 1;
 
-    /**
-     * Group orders
-     */
-    const ordersByCountry =
-      groupOrdersByCountry(orders);
+    // 2. Filter orders by date for the requested timeframe (days)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    /**
-     * Fetch markets
-     */
+    const filteredOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= cutoffDate;
+    });
+
+    const ordersByCountry = groupOrdersByCountry(filteredOrders);
+
+    // 3. Fetch markets from DB
     const markets = await prisma.market.findMany({
-      where: {
-        shop,
-      },
-
+      where: { shop },
       include: {
         translations: true,
-
         campaigns: {
-          where: {
-            status: "active",
-          },
+          where: { status: "active" },
         },
       },
     });
 
-    /**
-     * Enabled locales/currencies
-     */
+    // 4. Map enabled locales/currencies
     const enabledLocales = new Set();
-
     const enabledCurrencies = new Set();
 
     for (const market of shopifyMarkets) {
       if (market.webPresence?.defaultLocale?.locale) {
-        enabledLocales.add(
-          market.webPresence.defaultLocale.locale
-        );
+        enabledLocales.add(market.webPresence.defaultLocale.locale);
       }
-
       if (market.webPresence?.alternateLocales) {
-        for (const alt of market.webPresence
-          .alternateLocales) {
+        for (const alt of market.webPresence.alternateLocales) {
           if (alt.published) {
             enabledLocales.add(alt.locale);
           }
         }
       }
-
-      if (
-        market.currencySettings?.baseCurrency
-          ?.currencyCode
-      ) {
-        enabledCurrencies.add(
-          market.currencySettings.baseCurrency
-            .currencyCode
-        );
+      if (market.currencySettings?.baseCurrency?.currencyCode) {
+        enabledCurrencies.add(market.currencySettings.baseCurrency.currencyCode);
       }
     }
 
-    /**
-     * Update all markets dynamically
-     */
+    // 5. Update markets in DB with actual metrics
     const updatedMarkets = [];
 
     for (const market of markets) {
-      const countryData =
-        ordersByCountry[market.countryCode] || {
-          count: 0,
-          revenue: 0,
-        };
+      const countryData = ordersByCountry[market.countryCode] || {
+        count: 0,
+        revenue: 0,
+      };
 
-      /**
-       * Translation count
-       */
-      const translationCount =
-        market.translations.length;
+      const translationCount = market.translations.length;
 
-      /**
-       * Dynamic scaling based on selected days
-       */
+      // Real statistics from filtered orders
+      const realOrders = countryData.count;
+      const realRevenue = countryData.revenue;
 
-      const baseOrders =
-        countryData.count || market.orders || 1;
+      // Estimate visitors based on a standard 3% conversion rate, or 0 if no orders
+      const realVisitors = realOrders > 0 ? Math.ceil(realOrders / 0.03) : 0;
+      const conversionRate = realOrders > 0 ? 3.0 : 0.0;
 
-      const scaledOrders = Math.max(
-        1,
-        Math.floor(baseOrders * (days / 30))
-      );
+      const localizationScore = calculateLocalizationScore({
+        translatedItems: translationCount,
+        totalProducts,
+        hasCurrency: enabledCurrencies.has(market.currency),
+        hasLanguage: enabledLocales.has(market.language),
+        activeCampaigns: market.campaigns.length,
+        conversionRate,
+      });
 
-      const scaledVisitors = Math.max(
-        1,
-        Math.floor(
-          (market.visitors || 1) * (days / 30)
-        )
-      );
+      const trend = 0.0;
 
-      const scaledRevenue =
-        countryData.revenue > 0
-          ? Math.floor(
-              countryData.revenue * (days / 30)
-            )
-          : Math.floor(
-              (market.revenue || 0) * (days / 30)
-            );
-
-      /**
-       * Conversion rate
-       */
-      const conversionRate =
-        calculateConversionRate(
-          scaledOrders,
-          scaledVisitors
-        );
-
-      /**
-       * Localization score
-       */
-      const localizationScore =
-        calculateLocalizationScore({
-          translatedItems:
-            translationCount ||
-            market.translatedItems,
-
-          totalProducts,
-
-          hasCurrency:
-            enabledCurrencies.has(
-              market.currency
-            ),
-
-          hasLanguage:
-            enabledLocales.has(
-              market.language
-            ),
-
-          activeCampaigns:
-            market.campaigns.length,
-
+      const updated = await prisma.market.update({
+        where: { id: market.id },
+        data: {
+          visitors: realVisitors,
+          orders: realOrders,
+          revenue: realRevenue,
           conversionRate,
-        });
-
-      /**
-       * Trend
-       */
-      const previousOrders =
-        market.orders || 1;
-
-      const trend =
-        previousOrders > 0
-          ? Math.round(
-              ((scaledOrders - previousOrders) /
-                previousOrders) *
-                100 *
-                10
-            ) / 10
-          : 0;
-
-      /**
-       * Update DB
-       */
-      const updated =
-        await prisma.market.update({
-          where: {
-            id: market.id,
-          },
-
-          data: {
-            visitors: scaledVisitors,
-
-            orders: scaledOrders,
-
-            revenue: scaledRevenue,
-
-            conversionRate,
-
-            localizationScore,
-
-            translatedItems:
-              translationCount ||
-              market.translatedItems,
-
-            trend,
-          },
-        });
+          localizationScore,
+          translatedItems: translationCount,
+          trend,
+        },
+      });
 
       updatedMarkets.push(updated);
     }
 
-    /**
-     * Success response
-     */
     return jsonResponse({
       success: true,
-
       synced: updatedMarkets.length,
-
       days,
-
       markets: updatedMarkets,
-
       meta: {
         totalOrders: orders.length,
-
         totalProducts,
-
-        countriesWithOrders:
-          Object.keys(ordersByCountry).length,
-
-        enabledLocales:
-          Array.from(enabledLocales),
-
-        enabledCurrencies:
-          Array.from(enabledCurrencies),
+        countriesWithOrders: Object.keys(ordersByCountry).length,
+        enabledLocales: Array.from(enabledLocales),
+        enabledCurrencies: Array.from(enabledCurrencies),
       },
     });
   } catch (error) {
-    console.error(
-      "[app.api.sync] Action error:",
-      error
-    );
-
+    console.error("[app.api.sync] Action error:", error);
     return jsonResponse(
       {
         success: false,

@@ -1,4 +1,3 @@
-import { TrendingUp, Users, Star } from "lucide-react";
 
 /**
  * Maps country codes to background color classes for the flag avatar.
@@ -32,9 +31,9 @@ const BG_COLOR_MAP = {
  * @returns {string}
  */
 function getScoreBadgeClasses(score) {
-  if (score >= 80) return "bg-green-100 text-green-700";
-  if (score >= 60) return "bg-yellow-100 text-yellow-700";
-  return "bg-red-100 text-red-700";
+  if (score >= 80) return "bg-emerald-50 text-emerald-700";
+  if (score >= 60) return "bg-indigo-50 text-indigo-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 /**
@@ -43,9 +42,9 @@ function getScoreBadgeClasses(score) {
  * @returns {string}
  */
 function getProgressBarColor(score) {
-  if (score >= 80) return "bg-green-500";
-  if (score >= 60) return "bg-yellow-500";
-  return "bg-red-500";
+  if (score >= 80) return "bg-emerald-500";
+  if (score >= 60) return "bg-indigo-500";
+  return "bg-slate-400";
 }
 
 /**
@@ -69,68 +68,55 @@ export default function MarketCard({ market, onDelete }) {
   const progressColor = getProgressBarColor(market.localizationScore);
 
   return (
-    <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200">
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition duration-200">
       {/* TOP */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-11 h-11 rounded-xl ${bgColor} flex items-center justify-center text-xl`}
-          >
-            {market.flag}
+          <div className="w-11 h-8 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center bg-gray-50">
+            <img
+              src={`https://flagcdn.com/w80/${market.countryCode.toLowerCase()}.png`}
+              alt={`${market.country} flag`}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <div>
-            <h3 className="font-bold text-lg text-gray-900 leading-none">
+            <h3 className="font-bold text-base text-gray-900 leading-tight">
               {market.country}
             </h3>
-
-            <p className="text-sm text-gray-400 mt-1">{market.region}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{market.region}</p>
           </div>
         </div>
 
-        <div
-          className={`${scoreBadge} text-xs font-bold px-3 py-1 rounded-full`}
-        >
+        <div className={`${scoreBadge} text-xs font-bold px-2.5 py-1 rounded-full`}>
           {market.localizationScore}%
         </div>
       </div>
 
       {/* STATS */}
-      <div className="mt-6 space-y-4 text-sm">
+      <div className="mt-6 space-y-3.5 text-sm">
         <div className="flex justify-between">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Users size={14} />
+          <div className="text-gray-500 font-medium">
             Visitors
           </div>
-
           <p className="font-semibold text-gray-900">
             {formatVisitors(market.visitors)}
           </p>
         </div>
 
         <div className="flex justify-between">
-          <div className="flex items-center gap-2 text-gray-500">
-            <TrendingUp size={14} />
+          <div className="text-gray-500 font-medium">
             Conv. Rate
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">
-              {market.conversionRate}%
-            </span>
-
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-              +{market.trend}%
-            </span>
-          </div>
+          <p className="font-semibold text-gray-900">
+            {market.conversionRate}%
+          </p>
         </div>
 
         <div className="flex justify-between">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Star size={14} />
+          <div className="text-gray-500 font-medium">
             Loc. Score
           </div>
-
           <p className="font-semibold text-gray-900">
             {market.localizationScore}/100
           </p>
@@ -145,27 +131,18 @@ export default function MarketCard({ market, onDelete }) {
         ></div>
       </div>
 
-      {/* BUTTON */}
-      {/* <button className="mt-5 text-sm text-blue-600 font-semibold hover:text-blue-700 transition">
-        View Details →
-      </button> */}
-      {/* BUTTONS */}
-      <div className="mt-5 flex items-center justify-between">
-        <button className="text-sm text-blue-600 font-semibold hover:text-blue-700 transition">
-          View Details →
-        </button>
-
+      {/* FOOTER BUTTONS */}
+      <div className="mt-5 flex items-center justify-end">
         <button
           onClick={() => {
             const confirmed = window.confirm(
               `Remove ${market.country} market?`,
             );
-
             if (confirmed) {
               onDelete(market.id);
             }
           }}
-          className="text-sm text-red-600 font-semibold hover:text-red-700 transition"
+          className="text-xs text-red-500 font-semibold hover:text-red-700 transition duration-150"
         >
           Remove
         </button>

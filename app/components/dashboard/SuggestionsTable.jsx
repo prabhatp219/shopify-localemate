@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, RefreshCw, Check, Plus, Trash2, RotateCw, X } from "lucide-react";
+import { Filter, RefreshCw, Check, Plus, Trash2, RotateCw, X, Sparkles, ArrowUpRight } from "lucide-react";
 import {
   getSuggestions,
   applySuggestion,
@@ -33,6 +33,35 @@ const PRESET_MARKETS = [
   { name: "Thailand", flag: "🇹🇭" },
   { name: "China", flag: "🇨🇳" },
 ];
+
+const MARKET_TO_COUNTRY_CODE = {
+  india: "IN",
+  usa: "US",
+  germany: "DE",
+  japan: "JP",
+  mena: "AE",
+  uk: "GB",
+  france: "FR",
+  brazil: "BR",
+  "saudi arabia": "SA",
+  "south korea": "KR",
+  australia: "AU",
+  canada: "CA",
+  mexico: "MX",
+  italy: "IT",
+  spain: "ES",
+  uae: "AE",
+  indonesia: "ID",
+  nigeria: "NG",
+  turkey: "TR",
+  thailand: "TH",
+  china: "CN"
+};
+
+function getMarketFlagUrl(marketName) {
+  const code = MARKET_TO_COUNTRY_CODE[marketName.toLowerCase()] || "un";
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+}
 
 // How many rows per page
 const ROWS_PER_PAGE = 6;
@@ -231,13 +260,13 @@ export default function SuggestionsTable() {
   const pendingCount = suggestions.filter((s) => s.status === "pending").length;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
       {/* TOAST */}
       {toast.show && (
         <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border transition-all ${
           toast.type === "success"
-            ? "bg-green-50 text-green-800 border-green-200"
+            ? "bg-slate-50 text-slate-800 border-slate-200"
             : "bg-red-50 text-red-800 border-red-200"
         }`}>
           <span>{toast.type === "success" ? "✅" : "❌"}</span>
@@ -248,8 +277,8 @@ export default function SuggestionsTable() {
       {/* HEADER */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 flex-wrap gap-3">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white text-lg">
-            ✨
+          <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-700">
+            <Sparkles size={20} />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">AI Suggestions</h2>
@@ -263,7 +292,7 @@ export default function SuggestionsTable() {
           {/* + NEW MARKET BUTTON */}
           <button
             onClick={() => setShowGenerateForm(!showGenerateForm)}
-            className="bg-purple-600 hover:bg-purple-700 transition text-white px-4 py-2 rounded-xl text-sm flex items-center gap-2 font-semibold"
+            className="bg-zinc-200 hover:bg-zinc-300 transition text-zinc-800 px-4 py-2 rounded-xl text-sm flex items-center gap-2 font-semibold"
           >
             <Plus size={16} />
             New Market
@@ -296,7 +325,7 @@ export default function SuggestionsTable() {
                       setShowFilterMenu(false);
                     }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition ${
-                      statusFilter === opt.value ? "font-bold text-purple-600 bg-purple-50" : "text-gray-700"
+                      statusFilter === opt.value ? "font-bold text-slate-900 bg-slate-50" : "text-gray-700"
                     }`}
                   >
                     {opt.label}
@@ -320,7 +349,7 @@ export default function SuggestionsTable() {
           <button
             onClick={handleApplyAll}
             disabled={applyingAll || pendingCount === 0}
-            className="bg-green-600 hover:bg-green-700 transition text-white px-5 py-2 rounded-xl text-sm flex items-center gap-2 font-semibold disabled:opacity-50"
+           className="bg-zinc-800 hover:bg-zinc-700 transition text-white px-5 py-2 rounded-xl text-sm flex items-center gap-2 font-semibold disabled:opacity-50"
           >
             <Check size={16} />
             {applyingAll ? "Applying..." : "Apply All"}
@@ -330,7 +359,7 @@ export default function SuggestionsTable() {
 
       {/* ─── GENERATE NEW MARKET FORM ─────────────────────────── */}
       {showGenerateForm && (
-        <div className="px-6 py-5 border-b border-gray-200 bg-purple-50/50">
+        <div className="px-6 py-5 border-b border-gray-200 bg-slate-50/50">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-900">Generate AI Suggestion for a New Market</h3>
             <button
@@ -350,7 +379,7 @@ export default function SuggestionsTable() {
                   key={m.name}
                   onClick={() => handleQuickGenerate(m.name)}
                   disabled={generating}
-                  className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:bg-purple-50 hover:border-purple-300 transition flex items-center gap-1.5 font-medium text-gray-700 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:bg-slate-50 hover:border-slate-350 transition flex items-center gap-1.5 font-medium text-gray-700 disabled:opacity-50"
                 >
                   <span>{m.flag}</span>
                   <span>{m.name}</span>
@@ -360,7 +389,7 @@ export default function SuggestionsTable() {
           </div>
 
           {/* Custom market form */}
-          <div className="border-t border-purple-200/50 pt-4">
+          <div className="border-t border-slate-200/60 pt-4">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Or enter custom market details</p>
             <form
               onSubmit={(e) => {
@@ -379,7 +408,7 @@ export default function SuggestionsTable() {
                 value={genMarket}
                 onChange={(e) => setGenMarket(e.target.value)}
                 required
-                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white"
               />
               <input
                 type="text"
@@ -387,19 +416,19 @@ export default function SuggestionsTable() {
                 value={genHeadline}
                 onChange={(e) => setGenHeadline(e.target.value)}
                 required
-                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white"
               />
               <input
                 type="text"
                 placeholder="Detail (optional)"
                 value={genDetail}
                 onChange={(e) => setGenDetail(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white"
               />
               <button
                 type="submit"
                 disabled={generating}
-                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2"
               >
                 {generating ? (
                   <>
@@ -456,7 +485,7 @@ export default function SuggestionsTable() {
                 {statusFilter === "all" && (
                   <button
                     onClick={() => setShowGenerateForm(true)}
-                    className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition"
+                    className="mt-3 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition"
                   >
                     + Generate Your First Suggestion
                   </button>
@@ -474,8 +503,16 @@ export default function SuggestionsTable() {
               {/* MARKET */}
               <td className="px-6 py-5">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg ${item.tone || "bg-gray-100"} flex items-center justify-center text-lg`}>
-                    {item.flag || "🌐"}
+                  <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                    <img
+                      src={getMarketFlagUrl(item.market)}
+                      alt={item.market}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://flagcdn.com/w40/un.png";
+                      }}
+                    />
                   </div>
                   <span className="font-medium text-gray-900">{item.market}</span>
                 </div>
@@ -492,10 +529,7 @@ export default function SuggestionsTable() {
               {/* AI SUGGESTED */}
               <td className="px-6 py-5">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-purple-100 text-purple-600">
-                    AI
-                  </span>
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-slate-900">
                     {item.suggestedHeadline}
                   </span>
                 </div>
@@ -503,17 +537,18 @@ export default function SuggestionsTable() {
 
               {/* EXPECTED LIFT */}
               <td className="px-6 py-5">
-                <div className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-3 py-1 text-sm font-semibold">
-                  ↗ +{item.expectedLift}%
+                <div className="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                  <ArrowUpRight size={13} className="text-emerald-600" />
+                  <span>+{item.expectedLift}%</span>
                 </div>
               </td>
 
               {/* CONFIDENCE */}
               <td className="px-6 py-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${item.color || "bg-teal-600"}`}
+                      className="h-full rounded-full bg-slate-400"
                       style={{ width: `${item.confidence}%` }}
                     />
                   </div>
@@ -534,7 +569,7 @@ export default function SuggestionsTable() {
                     <button
                       onClick={() => handleApply(item.id)}
                       disabled={actionLoadingId === item.id}
-                      className="px-4 py-2 rounded-xl text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                      className="px-4 py-2 rounded-2xl text-sm font-semibold transition bg-zinc-200 text-zinc-800 hover:bg-zinc-300 disabled:opacity-50"
                     >
                       {actionLoadingId === item.id ? "..." : "Apply"}
                     </button>
@@ -555,7 +590,7 @@ export default function SuggestionsTable() {
                     onClick={() => handleRegenerateOne(item.id)}
                     disabled={actionLoadingId === item.id}
                     title="Regenerate AI"
-                    className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition disabled:opacity-50"
+                    className="p-2 rounded-lg text-gray-400 hover:text-slate-900 hover:bg-slate-50 transition disabled:opacity-50"
                   >
                     <RotateCw size={14} className={actionLoadingId === item.id ? "animate-spin" : ""} />
                   </button>

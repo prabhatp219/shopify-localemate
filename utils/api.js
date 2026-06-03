@@ -1,76 +1,110 @@
-import axios from "axios";
+// Custom request wrapper using native window.fetch so that Shopify App Bridge
+// can intercept the requests and automatically inject the OAuth session token.
+async function request(url, options = {}) {
+  const config = {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  };
 
-// Shared axios instance pointing to the Express backend
-const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-  headers: { "Content-Type": "application/json" },
-  timeout: 60000,
-});
+  if (options.body) {
+    config.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(`/app/api${url}`, config);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
 
 // ─── CAMPAIGN APIs ─────────────────────────────────────────────────────────────
 
 export async function generateCampaign(payload) {
-  const res = await api.post("/campaigns/generate", payload);
-  return res.data;
+  return request("/campaigns", {
+    method: "POST",
+    body: { actionType: "generate", ...payload },
+  });
 }
 
 export async function getCampaigns() {
-  const res = await api.get("/campaigns");
-  return res.data;
+  return request("/campaigns", { method: "GET" });
 }
 
 export async function getCampaignById(id) {
-  const res = await api.get(`/campaigns/${id}`);
-  return res.data;
+  return request(`/campaigns?id=${id}`, { method: "GET" });
 }
 
 export async function deleteCampaign(id) {
-  const res = await api.delete(`/campaigns/${id}`);
-  return res.data;
+  return request("/campaigns", {
+    method: "POST",
+    body: { actionType: "delete", id },
+  });
 }
 
 // ─── SUGGESTION APIs ───────────────────────────────────────────────────────────
 
 // Fetch all saved suggestions
 export async function getSuggestions() {
-  const res = await api.get("/suggestions");
-  return res.data;
+  return request("/suggestions", { method: "GET" });
 }
 
 // Generate a new AI suggestion and save it
 export async function generateSuggestion(market, currentHeadline, currentDetail = "") {
-  const res = await api.post("/suggestions/generate", { market, currentHeadline, currentDetail });
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: {
+      actionType: "generate",
+      market,
+      currentHeadline,
+      currentDetail,
+    },
+  });
 }
 
 // Mark a suggestion as applied
 export async function applySuggestion(id) {
-  const res = await api.post(`/suggestions/apply/${id}`);
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: { actionType: "apply", id },
+  });
 }
 
 // Mark a suggestion as under review
 export async function reviewSuggestion(id) {
-  const res = await api.patch(`/suggestions/review/${id}`);
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: { actionType: "review", id },
+  });
 }
 
 // Regenerate AI suggestion for an existing entry
 export async function regenerateSuggestion(id) {
-  const res = await api.post(`/suggestions/regenerate/${id}`);
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: { actionType: "regenerate", id },
+  });
 }
 
 // Apply all pending suggestions at once
 export async function applyAllSuggestions() {
-  const res = await api.post("/suggestions/apply-all");
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: { actionType: "apply-all" },
+  });
 }
 
 // Delete a suggestion by id
 export async function deleteSuggestion(id) {
-  const res = await api.delete(`/suggestions/${id}`);
-  return res.data;
+  return request("/suggestions", {
+    method: "POST",
+    body: { actionType: "delete", id },
+  });
 }
 
-export default api;
+
+export default request;
+

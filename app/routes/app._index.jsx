@@ -349,25 +349,6 @@ export async function loader({ request }) {
       orderBy: { localizationScore: "desc" },
     });
 
-    // Seed default markets if the shop has none
-    if (markets.length === 0) {
-      const upsertPromises = DEFAULT_SEED_MARKETS.map((m) =>
-        prisma.market.upsert({
-          where: {
-            shop_countryCode: { shop, countryCode: m.countryCode },
-          },
-          update: {},
-          create: { shop, ...m },
-        }),
-      );
-      await Promise.all(upsertPromises);
-
-      markets = await prisma.market.findMany({
-        where: { shop, isActive: true },
-        orderBy: { localizationScore: "desc" },
-      });
-    }
-
     const stats = calculateStats(markets);
 
     return { markets, stats };
@@ -573,23 +554,23 @@ export default function Dashboard() {
         />
 
         {/* ─── Hero Banner ─── */}
-        <div className="bg-gradient-to-r from-indigo-950 to-purple-800 text-white px-6 py-4 rounded-2xl mt-4 shadow-lg flex justify-between items-center gap-4">
+        <div className="bg-gradient-to-r from-indigo-950 to-purple-800 border border-slate-800/40 text-white px-10 py-4 rounded-2xl mt-4 shadow-xl flex justify-between items-center gap-6">
           <div className="flex-1">
-            <div className="flex items-center gap-2 text-gray-300 text-xs">
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
               🌐
               <p>Localized Experience Score</p>
             </div>
 
-            <h1 className="text-5xl font-bold mt-2">
+            <h1 className="text-7xl font-bold tracking-tight mt-2 flex items-baseline gap-1">
               {stats.totalScore}
-              <span className="text-xl">%</span>
+              <span className="text-2xl font-semibold text-slate-500">%</span>
             </h1>
 
-            <div className="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full inline-block mt-2">
+            <div className="bg-emerald-500/10 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 mt-3">
               ↗ +{stats.avgConversionLift}% vs last month
             </div>
 
-            <p className="text-gray-400 mt-2 text-xs">
+            <p className="text-slate-500 mt-3 text-xs">
               Based on {stats.activeMarkets} active market
               {stats.activeMarkets !== 1 ? "s" : ""} · Updated just now
             </p>
@@ -599,11 +580,14 @@ export default function Dashboard() {
           <div className="flex flex-col items-center flex-1">
             <div className="relative w-44 h-24">
               <svg viewBox="0 0 200 120" className="w-full h-full">
+                {/* 50 Marker */}
+                <text x="100" y="10" fill="#475569" fontSize="8" fontWeight="bold" textAnchor="middle">50</text>
+                
                 {/* Background arc */}
                 <path
                   d="M20 100 A80 80 0 0 1 180 100"
                   fill="none"
-                  stroke="#2d3748"
+                  stroke="#23242f"
                   strokeWidth="16"
                   strokeLinecap="round"
                 />
@@ -621,10 +605,11 @@ export default function Dashboard() {
                   }}
                 />
                 <defs>
-                  <linearGradient id="gradient">
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#ef4444" />
-                    <stop offset="50%" stopColor="#facc15" />
-                    <stop offset="100%" stopColor="#22c55e" />
+                    <stop offset="45%" stopColor="#f59e0b" />
+                    <stop offset="75%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#0891b2" />
                   </linearGradient>
                 </defs>
                 {/* Needle */}
@@ -644,17 +629,17 @@ export default function Dashboard() {
               </svg>
             </div>
 
-            <div className="flex gap-3 text-xs text-gray-400 mt-1">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+            <div className="flex gap-3.5 text-xs text-slate-400 mt-1 font-medium">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-[#ef4444] rounded-full"></div>
                 Low
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-[#f59e0b] rounded-full"></div>
                 Medium
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-[#10b981] rounded-full"></div>
                 High
               </div>
             </div>
@@ -663,20 +648,20 @@ export default function Dashboard() {
           {/* ─── Stats Column ─── */}
           <div className="text-right space-y-3 flex-1">
             <div>
-              <p className="text-gray-300 text-xs">Active Markets</p>
-              <h2 className="text-3xl font-bold mt-0.5">
+              <p className="text-slate-400 text-xs font-medium">Active Markets</p>
+              <h2 className="text-3xl font-bold mt-0.5 text-white">
                 {stats.activeMarkets}
               </h2>
             </div>
             <div>
-              <p className="text-gray-300 text-xs">Avg Conversion Lift</p>
-              <h2 className="text-3xl font-bold text-green-400 mt-0.5">
+              <p className="text-slate-400 text-xs font-medium">Avg Conversion Lift</p>
+              <h2 className="text-3xl font-bold text-emerald-400 mt-0.5">
                 +{stats.avgConversionLift}%
               </h2>
             </div>
             <div>
-              <p className="text-gray-300 text-xs">Content Translated</p>
-              <h2 className="text-3xl font-bold mt-0.5">
+              <p className="text-slate-400 text-xs font-medium">Content Translated</p>
+              <h2 className="text-3xl font-bold mt-0.5 text-white">
                 {stats.totalTranslated.toLocaleString()} items
               </h2>
             </div>
@@ -700,7 +685,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900">Add Market</h2>
+                <h2 className="text-lg font-bold text-gray-600">Add Market</h2>
                 <button
                   onClick={() => {
                     setShowAddModal(false);
