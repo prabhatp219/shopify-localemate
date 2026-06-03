@@ -266,15 +266,52 @@
         const textVal = node.nodeValue.trim();
         if (s.currentHeadline && textVal.toLowerCase() === s.currentHeadline.toLowerCase()) {
           const parent = node.parentElement;
-          if (parent && !parent.hasAttribute('data-lm-original')) {
-            parent.setAttribute('data-lm-original', textVal);
-            // Store AI translation for the market key
+          if (parent) {
+            if (!parent.hasAttribute('data-lm-original')) {
+              parent.setAttribute('data-lm-original', textVal);
+            }
+            // Store AI translation for the market key (always set to support multi-market matching)
             const marketKey = s.market.toLowerCase();
             parent.setAttribute(`data-lm-trans-${marketKey}`, s.suggestedHeadline);
           }
          }
       }
     });
+  }
+
+  function markElementIfMatches(node) {
+    if (!node || !appliedSuggestions.length) return;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textVal = node.nodeValue.trim();
+      appliedSuggestions.forEach(s => {
+        if (s.currentHeadline && textVal.toLowerCase() === s.currentHeadline.toLowerCase()) {
+          const parent = node.parentElement;
+          if (parent) {
+            if (!parent.hasAttribute('data-lm-original')) {
+              parent.setAttribute('data-lm-original', textVal);
+            }
+            const marketKey = s.market.toLowerCase();
+            parent.setAttribute(`data-lm-trans-${marketKey}`, s.suggestedHeadline);
+
+            // Immediately apply replacement for active locale
+            const saved = localStorage.getItem('localemate_locale') || 'en';
+            applyReplacement(parent, saved);
+          }
+        }
+      });
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const walker = document.createTreeWalker(
+        node,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      let child;
+      while (child = walker.nextNode()) {
+        markElementIfMatches(child);
+      }
+    }
   }
 
   function applyAllReplacements(locale) {
@@ -349,6 +386,14 @@
   function initObserver() {
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
+        // Handle newly added nodes (dynamic sections/hydration)
+        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(node => {
+            markElementIfMatches(node);
+          });
+        }
+
+        // Handle text content changes
         let target = mutation.target;
         if (target.nodeType === Node.TEXT_NODE) {
           target = target.parentElement;
