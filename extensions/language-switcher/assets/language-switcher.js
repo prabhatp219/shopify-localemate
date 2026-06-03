@@ -12,6 +12,12 @@
 
   if (!widget || !trigger || !dropdown) return;
 
+  // Track active locale state globally within IIFE (bypasses iframe sandboxed localStorage failures)
+  let activeLocale = 'en';
+  try {
+    activeLocale = localStorage.getItem('localemate_locale') || widget.dataset.currentLocale || 'en';
+  } catch (_) {}
+
   // ─── Read settings injected by Liquid via data attributes ───
   // These are written by the Liquid block from schema settings.
   // Fallback to sensible defaults so the widget works even without them.
@@ -174,6 +180,8 @@
       try {
         localStorage.setItem('localemate_locale', locale);
       } catch (_) {}
+      
+      activeLocale = locale;
 
       // Trigger client-side Google translation on-the-fly
       changeLanguage(locale);
@@ -185,23 +193,20 @@
   });
 
   // ─── On page load: restore saved locale preference ───────────
-  try {
-    const saved = localStorage.getItem('localemate_locale');
-    if (saved && saved !== 'en') {
-      let attempts = 0;
-      const checkInterval = setInterval(() => {
-        const selectField = document.querySelector('.goog-te-combo');
-        if (selectField) {
-          changeLanguage(saved);
-          updateWidgetActiveLocale(saved);
-          applyAllReplacements(saved);
-          clearInterval(checkInterval);
-        }
-        attempts++;
-        if (attempts > 50) clearInterval(checkInterval); // Stop after 5 seconds
-      }, 100);
-    }
-  } catch (_) { /* ignore */ }
+  if (activeLocale && activeLocale !== 'en') {
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+      const selectField = document.querySelector('.goog-te-combo');
+      if (selectField) {
+        changeLanguage(activeLocale);
+        updateWidgetActiveLocale(activeLocale);
+        applyAllReplacements(activeLocale);
+        clearInterval(checkInterval);
+      }
+      attempts++;
+      if (attempts > 50) clearInterval(checkInterval); // Stop after 5 seconds
+    }, 100);
+  }
 
   // ─── Shift up if Shopify Preview Bar is present ────────────────
   function checkPreviewBar() {
@@ -242,9 +247,8 @@
 
         markElementsToLocalize();
         // Initial run
-        const saved = localStorage.getItem('localemate_locale') || 'en';
-        console.log(`[LocaleMate] Storefront Locale: ${saved}`);
-        applyAllReplacements(saved);
+        console.log(`[LocaleMate] Storefront Locale: ${activeLocale}`);
+        applyAllReplacements(activeLocale);
       }
     } catch (e) {
       console.error('[LocaleMate] Failed to load applied suggestions:', e);
@@ -295,8 +299,7 @@
             parent.setAttribute(`data-lm-trans-${marketKey}`, s.suggestedHeadline);
 
             // Immediately apply replacement for active locale
-            const saved = localStorage.getItem('localemate_locale') || 'en';
-            applyReplacement(parent, saved);
+            applyReplacement(parent, activeLocale);
           }
         }
       });
@@ -401,8 +404,7 @@
         if (target) {
           const marked = target.closest('[data-lm-original]');
           if (marked) {
-            const saved = localStorage.getItem('localemate_locale') || 'en';
-            applyReplacement(marked, saved);
+            applyReplacement(marked, activeLocale);
           }
         }
       });
