@@ -2,9 +2,12 @@ import { redirect } from "react-router";
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
+  console.log("[LocaleMate] Root loader URL:", request.url);
+  console.log("[LocaleMate] shop parameter:", url.searchParams.get("shop"));
+  console.log("[LocaleMate] host parameter:", url.searchParams.get("host"));
 
   if (url.searchParams.get("shop") || url.searchParams.get("host")) {
-    throw redirect(`/app?${url.searchParams.toString()}`);
+    return redirect(`/app?${url.searchParams.toString()}`);
   }
 
   return null;
