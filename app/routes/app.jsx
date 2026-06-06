@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Outlet,
   useLoaderData,
@@ -19,6 +20,18 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
+
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const shop = urlParams.get("shop");
+      const host = urlParams.get("host");
+      if (shop) sessionStorage.setItem("localemate_shop", shop);
+      if (host) sessionStorage.setItem("localemate_host", host);
+    } catch (e) {
+      console.warn("[LocaleMate] Failed to write to sessionStorage:", e);
+    }
+  }, []);
 
   return (
     <AppProvider embedded apiKey={apiKey}>

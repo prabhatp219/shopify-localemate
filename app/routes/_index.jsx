@@ -19,7 +19,19 @@ export default function Index() {
     // If the app is loaded inside an iframe (Shopify Admin), redirect to /app
     try {
       if (window.self !== window.top) {
-        window.location.href = "/app" + window.location.search;
+        let search = window.location.search;
+        
+        // If query parameters are missing (e.g. on client-side header navigation transitions), 
+        // retrieve them from sessionStorage to avoid redirecting to the login screen
+        if (!search) {
+          const shop = sessionStorage.getItem("localemate_shop");
+          const host = sessionStorage.getItem("localemate_host");
+          if (shop && host) {
+            search = `?shop=${encodeURIComponent(shop)}&host=${encodeURIComponent(host)}`;
+          }
+        }
+        
+        window.location.href = "/app" + search;
       }
     } catch (e) {
       // If cross-origin restrictions block window.top access, we are in an iframe
