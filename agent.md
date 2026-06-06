@@ -1,6 +1,6 @@
 # LocaleMate — Project Reference (agent.md)
 
-> **Last updated:** 2026-05-30
+> **Last updated:** 2026-06-06
 > **Author:** Prabhat Prajapati
 > **Purpose:** Complete project reference for any AI model to understand and continue working on this codebase.
 
@@ -51,9 +51,12 @@ locale-mate/
 ├── .env                               # Environment variables (secrets)
 ├── .env.example                       # Template for .env
 ├── vite.config.js                     # Vite configuration
+├── react-router.config.js             # React Router config loading the @vercel/react-router preset
 ├── tailwind.config.js                 # TailwindCSS config
-├── shopify.app.toml                   # Shopify app config (scopes, webhooks)
+├── shopify.app.localemate.toml        # Shopify app config (scopes, webhooks)
 ├── shopify.web.toml                   # Shopify web config
+├── vercel.json                        # Vercel deployment config (specifies custom build command)
+├── Dockerfile                         # Production Docker deployment config (for Render)
 │
 ├── prisma/
 │   ├── schema.prisma                  # Database schema (8 models)
@@ -415,6 +418,7 @@ node prisma/seed.js          # Seed default markets + analytics
 - [x] Shopify sync API route
 - [x] Functional Header buttons (Add Market, Sync/Period filter)
 - [x] Theme App Extension language switcher (`extensions/language-switcher`) using client-side Google Translate triggers and custom dropdown widget with active state synchronization (`goog-te-combo`)
+- [x] Official Vercel deployment integration using the `@vercel/react-router` preset, removing custom API wrappers and implementing secure cookie/localStorage redirect fallbacks for embedded iframe stability.
 
 ---
 
