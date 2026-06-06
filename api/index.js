@@ -1,24 +1,38 @@
-import { createRequestListener } from "@react-router/node";
-import { createRequestHandler } from "react-router";
+import {
+  createRequestHandler,
+  createRequestListener,
+} from "@react-router/node";
+
 import * as buildNamespace from "../build/server/index.js";
 
-// Spread the ES module namespace into a plain object to avoid live-binding issues
-// that occur when react-router's createRequestHandler reads the build on each request
+// Convert ESM namespace to plain object
 const build = { ...buildNamespace };
 
-console.log("[LocaleMate] Plain build keys:", Object.keys(build));
-console.log("[LocaleMate] build.routes type:", typeof build.routes);
+console.log("[LocaleMate] Build keys:", Object.keys(build));
+console.log("[LocaleMate] BUILD EXISTS:", !!build);
+console.log("[LocaleMate] ROUTES EXISTS:", !!build.routes);
+console.log(
+  "[LocaleMate] ROUTE COUNT:",
+  Object.keys(build.routes || {}).length
+);
+console.log(
+  "[LocaleMate] ROUTE IDS:",
+  Object.keys(build.routes || {})
+);
 
-const handler = createRequestHandler(build, process.env.NODE_ENV || "production");
+const handler = createRequestHandler(build);
 const listener = createRequestListener(handler);
 
 export default async function serverHandler(req, res) {
   try {
     await listener(req, res);
   } catch (error) {
-    console.error("[LocaleMate] Handler error:", error.message);
+    console.error("[LocaleMate] Handler error:", error);
     res.statusCode = 500;
     res.setHeader("Content-Type", "text/plain");
-    res.end("Internal Server Error: " + error.message);
+    res.end(
+      "Internal Server Error: " +
+        (error?.message || "Unknown error")
+    );
   }
 }
