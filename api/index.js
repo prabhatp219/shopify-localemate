@@ -1,5 +1,5 @@
-import pkg from "@react-router/node";
-const { createRequestHandler } = pkg;
+import { createRequestHandler } from "react-router";
+import { createRequestListener } from "@react-router/node";
 import { fileURLToPath } from "url";
 import path from "path";
 
